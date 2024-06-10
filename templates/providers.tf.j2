@@ -1,0 +1,11 @@
+provider "aws" {
+  region = "{{ cloud_provider_region }}"
+}
+
+terraform {
+  required_providers {
+	aws = {
+	  version = "~> 5.37.0"
+	}
+  }
+}

@@ -1,0 +1,23 @@
+{% if is_cluster == 'true' %}
+
+import {
+  to = aws_rds_cluster.{{ rds_identifier }}
+  id = "{{ rds_identifier }}"
+}
+
+{% else %}
+
+import {
+  to = aws_db_instance.{{ rds_identifier }}
+  id = "{{ rds_identifier }}"
+}
+{% endif -%}
+
+{%- if 'default.' not in db_param_group %}
+
+import {
+  to = aws_db_parameter_group.{{ rds_identifier }}
+  id = "{{ db_param_group }}"
+}
+
+{% endif %}

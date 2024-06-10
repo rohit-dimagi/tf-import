@@ -1,0 +1,10 @@
+terraform {
+  backend "remote" {
+    hostname     = "{{ tfe_hostname }}"
+    organization = "{{ tfe_org_name }}"
+
+    workspaces {
+      name = "{{ tfe_workspace_name }}"
+    }
+  }
+}
