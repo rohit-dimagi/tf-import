@@ -12,15 +12,21 @@ RESOURCE_CLEANUP = {
     ],
     "aws_instance": [
         "= 0",
-        "\[\]",
+        "= \[\]",
         "ipv6_address_count",
     ],
-    "rds": [
+    "rds-cluster": [
+        "= 0",
+        "= \[\]",
+    ],
+    "rds-instance": [
         "= 0",
         "= \[\]",
     ],
     "aws_route53_record": [
-        "multivalue_answer_routing_policy"
+        "multivalue_answer_routing_policy",
+        "= 0",
+        "= \[\]",
     ],
     "aws_ebs_volume": [
         "= 0"
@@ -28,7 +34,6 @@ RESOURCE_CLEANUP = {
     "aws_eks_node_group": [
         "= 0",
         "= \[\]"
-
     ],
     "aws_security_group": [
         "name_prefix"
@@ -49,8 +54,14 @@ def remove_global_lines(tf_file, list_to_cleanup):
         lines = readfile.readlines()
         filtered_lines = []
         
-        filtered_lines = [line for line in lines if not any(element in line for element in list_to_cleanup)]
-        
+        for line in lines:
+            if any(element in line for element in list_to_cleanup):
+                # If 'Condition' is in the line and '= {}' is one of the elements, do not remove it.
+                # Special rule for aws_iam_role properties assume_role_policy of jsonencode block.
+                if "= {}" in line and "Condition" in line:
+                    filtered_lines.append(line)
+                continue
+            filtered_lines.append(line)
         with open(output_file, 'w') as write_file:
             write_file.writelines(filtered_lines)
         
