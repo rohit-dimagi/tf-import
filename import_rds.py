@@ -1,6 +1,9 @@
 from utils.utilities import Utilities
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
+import sys
+import os
+from utils.cleanup import cleanup_tf_plan_file
 
 class RDSImportSetUp:
     """
@@ -48,42 +51,54 @@ class RDSImportSetUp:
         for page in paginator.paginate():
             for db_cluster in page['DBClusters']:
                 db_cluster_arn = db_cluster['DBClusterArn']
+                
                 # Get tags for the instance
                 tags_response = self.client.list_tags_for_resource(ResourceName=db_cluster_arn)
                 tags = {tag['Key']: tag['Value'] for tag in tags_response['TagList']}
+                
                 # Check if the instance matches all tag filters
                 if all(tags.get(key) == value for key, value in self.tag_filters.items()):
+                    security_groups = [sg['VpcSecurityGroupId'] for sg in db_cluster['VpcSecurityGroups']]
+                    
+                    # Get cluster instances and their parameter groups
+                    cluster_instances = []
+                    for instance_identifier in db_cluster['DBClusterMembers']:
+                        instance_info = self.client.describe_db_instances(DBInstanceIdentifier=instance_identifier['DBInstanceIdentifier'])
+                        for instance in instance_info['DBInstances']:
+                            instance_data = {
+                                "instance_identifier": instance['DBInstanceIdentifier'],
+                                "db_parameter_group": [param_group['DBParameterGroupName'] for param_group in instance['DBParameterGroups']]
+                            }
+                            cluster_instances.append(instance_data)
+                    
                     cluster_info = {
+                        "kms_key_id": db_cluster['KmsKeyId'].split('/')[-1],
                         "identifier": db_cluster['DBClusterIdentifier'],
                         "is_aurora": "true" if db_cluster['Engine'].startswith('aurora') else "false",
-                        "parameter-group": db_cluster['DBClusterParameterGroup']
+                        "cluster_parameter": db_cluster['DBClusterParameterGroup'],
+                        "security_groups": security_groups,
+                        "cluster_instances": cluster_instances
                     }
-                    clusters.append(cluster_info) 
+                clusters.append(cluster_info)
+
         return clusters
-    
-    def generate_import_blocks(self, instances, clusters):        
-        for instnace in instances:
-            output_file_path = f"{self.local_repo_path}/imports_{instnace['identifier']}.tf"
-            template = self.tmpl.get_template('rds_import.tf.j2')
 
-            context = {
-                'rds_identifier': instnace["identifier"],
-                'db_param_group': instnace["parameter-group"],
-                'is_cluster': "false"
-            }
-
-            rendered_template = template.render(context)
-
-            with open(output_file_path, 'w') as f:
-                f.write(rendered_template)
+    def generate_import_blocks(self, instances=[], clusters=[]):         
+        if not clusters:
+            logger.info("No Cluster found: Nothing to do. Exitting")
+            sys.exit(1)       
         
-        for instnace in clusters:
-            output_file_path = f"{self.local_repo_path}/imports_{instnace['identifier']}.tf"
-            template = self.tmpl.get_template('rds_import.tf.j2')
+        template = self.tmpl.get_template('rds_import.tf.j2')
 
+        for cluster in clusters:
+            logger.info(f"Importing : {cluster}")
+            output_file_path = f"{self.local_repo_path}/imports_{cluster['identifier']}.tf"
             context = {
-                'rds_identifier': instnace["identifier"],
-                'db_param_group': instnace["parameter-group"],
+                'rds_cluster_identifier': cluster["identifier"],
+                'cluster_parameter': cluster["cluster_parameter"],
+                'cluster_instances': cluster['cluster_instances'],
+                "kms_key_id": cluster["kms_key_id"],
+                "security_groups": cluster["security_groups"],
                 'is_cluster': "true"
             }
 
@@ -91,27 +106,25 @@ class RDSImportSetUp:
 
             with open(output_file_path, 'w') as f:
                 f.write(rendered_template)
+            
+            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{cluster['identifier']}.tf"])
+            os.rename(output_file_path, f"{output_file_path}.imported")
+            cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{cluster['identifier']}.tf")
+
+        for filename in os.listdir(self.local_repo_path):
+            if filename.endswith('.imported'):
+                new_filename = filename.replace('.imported', '')
+                old_file = os.path.join(self.local_repo_path, filename)
+                new_file = os.path.join(self.local_repo_path, new_filename)
+                os.rename(old_file, new_file)       
     
 
     def set_everything(self):
+        Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
         clusters = self.get_rds_clusters()
-        instances = self.get_rds_instances()
-        logger.info(f"Instances: {instances}")
-        logger.info(f"Instances: {clusters}")
-        #self.generate_import_blocks(instances, clusters)
-
-        #Utilities.generate_tf_backend(self.local_repo_path,tfe_hostname="app.terraform.io", tfe_workspace="store-api-iac", tfe_org="rohit-kumar-hcp")
-        #Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
-        #Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
-        #Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out={self.resource_name}.tf"])
-        Utilities.clean_generated_tf_code(resource="rds", tf_file=f"{self.local_repo_path}/{self.resource_name}.tf")
-        # with open(f"{self.local_repo_path}/{self.resource_name}.tf", "r+") as f:
-        #     d = f.readlines()
-        #     f.seek(0)
-        #     for i in d:
-        #         if "= 0" not in i:
-        #             f.write(i)
-        #         elif "null" not in i:
-        #             f.write(i)
-        #     f.truncate()
-        # Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
+        
+        self.generate_import_blocks(clusters=clusters)
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
+    

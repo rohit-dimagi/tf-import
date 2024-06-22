@@ -15,11 +15,11 @@ RESOURCE_CLEANUP = {
         "= \[\]",
         "ipv6_address_count",
     ],
-    "rds-cluster": [
+    "aws_rds_cluster": [
         "= 0",
         "= \[\]",
     ],
-    "rds-instance": [
+    "aws_rds_cluster_instance": [
         "= 0",
         "= \[\]",
     ],
@@ -47,7 +47,7 @@ RESOURCE_CLEANUP = {
 
 
 def remove_global_lines(tf_file, list_to_cleanup):
-    output_file = f"{tf_file}-global-cleanup.tf"
+    output_file = tf_file #f"{tf_file}-global-cleanup.tf"
     logger.info(f"Removing lines containing following items: {list_to_cleanup}")
     
     with open(tf_file, "r") as readfile:
@@ -62,8 +62,9 @@ def remove_global_lines(tf_file, list_to_cleanup):
                     filtered_lines.append(line)
                 continue
             filtered_lines.append(line)
-        with open(output_file, 'w') as write_file:
-            write_file.writelines(filtered_lines)
+    
+    with open(output_file, 'w') as write_file:
+        write_file.writelines(filtered_lines)
         
     logger.info(f"Generated intermediate file to process: {output_file}")
     return output_file
@@ -83,7 +84,7 @@ def should_remove_line(line, resource_type, custom_pattern=[]):
             return True
     return False
 
-def process_terraform_plan(input_file, output_file):
+def process_terraform_plan(input_file):
     with open(input_file, 'r') as file:
         lines = file.readlines()
 
@@ -129,16 +130,11 @@ def process_terraform_plan(input_file, output_file):
         
 
     # Write the cleaned content to a new file
-    with open(output_file, 'w') as new_file:
+    with open(input_file, 'w') as new_file:
         new_file.writelines(new_lines)
 
     logger.info(f"Cleanup Resources with Patterns: {RESOURCE_CLEANUP}")
-    
-    if os.path.exists(input_file):
-        os.remove(input_file)
-    logger.info(f"Removing Intermediate generated file: {input_file} ")
-
-    logger.info(f"Generated Cleaned up File: {output_file}")
+    logger.info(f"Generated Cleaned up File: {input_file}")
 
 
 def run_terraform_cmd(cmd):
@@ -158,26 +154,12 @@ def run_terraform_cmd(cmd):
            logger.error(f"Error during terraform {cmd}: {e}")
            sys.exit(1)
 
-def print_usage():
-    print("Usage: python cleanup.py <input_tf_file> <output_tf_file>")
-    print("  <input_tf_file>        The Input file to read the Terraform Plan.")
-    print("  <output_tf_file>       The output file to write the Terraform cleaned plan.")
 
-def main():
-    if len(sys.argv) < 2:
-        print("Error: Invalid number of arguments.")
-        print_usage()
-        sys.exit(1)
-    input_tf_file = sys.argv[1]
-    output_tf_file = sys.argv[2]
+def cleanup_tf_plan_file(input_tf_file):
 
     # Process the Global defaults vaules
     level1_cleanup_file = remove_global_lines(input_tf_file, RESOURCE_CLEANUP["global"])
     
     # Process resource Specific Blocks
-    process_terraform_plan(level1_cleanup_file, output_tf_file)
+    process_terraform_plan(level1_cleanup_file)
     
-    # Format and validate terraform code
-    run_terraform_cmd(["terraform", "fmt"])
-if __name__ == "__main__":
-    main()

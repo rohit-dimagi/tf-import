@@ -1,11 +1,9 @@
-{% for instance_info in instance_details %}
-
 import {
-  to = {{ resource_type  ~ '.' ~  instance_info.instance_name }}
-  id = "{{ instance_info.instance_id }}"
+  to = aws_instance.{{instance_details.instance_name }}
+  id = "{{ instance_details.instance_id }}"
 }
 
-{%- for volume in instance_info.Volumes %}
+{%- for volume in instance_details.Volumes %}
 {% if volume.AttachmentType == 'data' %}
 import {
   to = aws_ebs_volume.{{ volume.VolumeId}}
@@ -14,16 +12,15 @@ import {
 
 import {
   to = aws_volume_attachment.{{ volume.VolumeId}}
-  id = "{{ volume.Device ~ ':' ~ volume.VolumeId ~ ':' ~  instance_info.instance_id }}"
+  id = "{{ volume.Device ~ ':' ~ volume.VolumeId ~ ':' ~  instance_details.instance_id }}"
 }
 
-{% endif %}
+{% endif -%}
 {% endfor -%}
 
+{% if dns_exist %}
 import {
-  to = aws_route53_record.{{ instance_info.instance_name}}
-  id = "{{ zone_id ~ '_' ~ instance_info.instance_name ~ '.' ~ zone_name }}_A"
+  to = aws_route53_record.{{ instance_details.instance_name}}
+  id = "{{ zone_id ~ '_' ~ instance_details.instance_name ~ '.' ~ zone_name }}_A"
 }
-
-{% endfor -%}
-
+{% endif %}

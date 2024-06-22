@@ -110,6 +110,45 @@ class Utilities:
     
     @staticmethod
     def clean_generated_tf_code(resource, tf_file, config_file="files/config.json"):
+        RESOURCE_CLEANUP = {
+            "global": [
+                "null",
+                "= {}"
+            ],
+            "aws_instance": [
+                "= 0",
+                "= \[\]",
+                "ipv6_address_count",
+            ],
+            "rds-cluster": [
+                "= 0",
+                "= \[\]",
+            ],
+            "rds-instance": [
+                "= 0",
+                "= \[\]",
+            ],
+            "aws_route53_record": [
+                "multivalue_answer_routing_policy",
+                "= 0",
+                "= \[\]",
+            ],
+            "aws_ebs_volume": [
+                "= 0"
+            ],
+            "aws_eks_node_group": [
+                "= 0",
+                "= \[\]"
+            ],
+            "aws_security_group": [
+                "name_prefix"
+            ],
+            "aws_launch_template": [
+                "name_prefix",
+                "= 0",
+                "= \[\]",
+            ],
+        }
         if not os.path.exists(tf_file):
             logger.error(f"File {tf_file} doesn't exists.")
             return

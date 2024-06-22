@@ -1,23 +1,44 @@
 {% if is_cluster == 'true' %}
 
 import {
-  to = aws_rds_cluster.{{ rds_identifier }}
-  id = "{{ rds_identifier }}"
+  to = aws_rds_cluster.{{ rds_cluster_identifier }}
+  id = "{{ rds_cluster_identifier }}"
 }
 
-{% else %}
-
+{%- if 'default.' not in cluster_parameter %}
 import {
-  to = aws_db_instance.{{ rds_identifier }}
-  id = "{{ rds_identifier }}"
+  to = aws_rds_cluster_parameter_group.{{ rds_cluster_identifier }}
+  id = "{{ cluster_parameter }}"
 }
-{% endif -%}
-
-{%- if 'default.' not in db_param_group %}
-
-import {
-  to = aws_db_parameter_group.{{ rds_identifier }}
-  id = "{{ db_param_group }}"
-}
-
 {% endif %}
+
+import {
+  to = aws_kms_key.{{ rds_cluster_identifier }}
+  id = "{{ kms_key_id }}"
+}
+{% for sg in security_groups%}
+import {
+  to = aws_security_group.{{ rds_cluster_identifier }}
+  id = "{{ sg }}"
+}
+{% endfor %}
+{% endif %}
+
+{% for db_instance in cluster_instances %}
+import {
+  to = aws_rds_cluster_instance.{{ db_instance.instance_identifier }}
+  id = "{{ db_instance.instance_identifier }}"
+}
+
+{% for db_parameter_group in db_instance.db_parameter_group %}
+{%- if 'default.' not in db_parameter_group %}
+
+import {
+  to = aws_db_parameter_group.{{ db_instance.instance_identifier }}
+  id = "{{ db_parameter_group }}"
+}
+{% endif %}
+{% endfor %}
+
+{% endfor %}
+

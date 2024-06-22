@@ -1,10 +1,15 @@
 from utils.utilities import Utilities
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
-
+import os
+from botocore.exceptions import ClientError
+from utils.cleanup import cleanup_tf_plan_file
+import sys
 class EC2ImportSetUp:
     """
-    Cleanup Gold AMI and it"s snapshot which is no longer needed.
+    Import Block for EC2 Import.
+    Supoprted resources: EC2, EBS, Route53
+    Note: Target Group Attachement resource import is not supported by Provider
     """
 
     def __init__(self, environment, workspace, region, resource, local_repo_path, hosted_zone_name, filters):
@@ -18,6 +23,9 @@ class EC2ImportSetUp:
         self.tag_filters = {key: value for key, value in filters} if filters else {}
 
     def get_hosted_zone_id(self, vpc_id):
+        """
+        Get Hosted Zone ID from Zone Name.
+        """
         client = Utilities.create_client(region=self.region, resource="route53")
         # List hosted zones associated with the given VPC
         response = client.list_hosted_zones_by_vpc(
@@ -37,7 +45,9 @@ class EC2ImportSetUp:
         """
         # Filter instances based on tags
         filters = [{'Name': f'tag:{key}', 'Values': [value]} for key, value in self.tag_filters.items()]
-        
+        # Add a filter to exclude terminated instances
+        filters.append({'Name': 'instance-state-name', 'Values': ['pending', 'running', 'shutting-down', 'stopping', 'stopped']})
+    
         instances = self.client.instances.filter(Filters=filters)        
         instance_details = []
     
@@ -69,34 +79,83 @@ class EC2ImportSetUp:
                 instance_info['Volumes'].append(attachment_info)
 
             instance_details.append(instance_info)
-        logger.info(instance_details)
         return instance_details
-        
+
+    def check_dns_record(self, ip, hosted_zone_id):
+        """
+        Get Instance DNS Record
+        """
+        client = Utilities.create_client(region=self.region, resource="route53")
+        # Retrieve the list of record sets for the specified hosted zone
+        paginator = client.get_paginator('list_resource_record_sets')
+        record_sets = paginator.paginate(HostedZoneId=hosted_zone_id)
+
+        record_found = False
+        try:
+            for page in record_sets:
+                for record_set in page['ResourceRecordSets']:
+                    for record in record_set.get('ResourceRecords', []):
+                        if record['Value'] == ip:
+                            record_found = True
+                            break
+                if record_found:
+                    break
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchHostedZone':
+                logger.error(f"No hosted zone found with ID: {hosted_zone_id}")
+            return False
+       
+
+        return record_found
+
     def generate_import_blocks(self, instance_details):
-        output_file_path = f"{self.local_repo_path}/imports.tf"
+        """
+        Generate Import Blocks, Generate Terraform code, Cleanup Terraform code
+        """
+        if not instance_details:
+            logger.info("No instance found: Nothing to do. Exitting")
+            sys.exit(1)
         template = self.tmpl.get_template('ec2_import.tf.j2')
         
         hosted_zone_id = self.get_hosted_zone_id(instance_details[0]["vpc_id"])
-        context = {
-            'instance_details': instance_details,
-            'resource_type': "aws_instance",
-            'zone_id': hosted_zone_id,
-            'zone_name': self.hosted_zone_name
-        }
+        
+        for instance in instance_details:
+            logger.info(f"Importing : {instance}")
+            
+            is_dns_exist =  self.check_dns_record( ip=instance['private_ip'], hosted_zone_id=hosted_zone_id)
+            context = {
+                'instance_details': instance,
+                'zone_id': hosted_zone_id,
+                'zone_name': self.hosted_zone_name,
+                'dns_exist': is_dns_exist
+            }
 
-        rendered_template = template.render(context)
+            rendered_template = template.render(context)
+            
+            output_file_path = f"{self.local_repo_path}/import-{instance['instance_name']}.tf"
+            with open(output_file_path, 'w') as f:
+                f.write(rendered_template)
 
-        with open(output_file_path, 'w') as f:
-            f.write(rendered_template)
-    
+            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{instance['instance_name']}.tf"])
+            os.rename(output_file_path, f"{output_file_path}.imported")
+            cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{instance['instance_name']}.tf")
 
+        for filename in os.listdir(self.local_repo_path):
+            if filename.endswith('.imported'):
+                new_filename = filename.replace('.imported', '')
+                old_file = os.path.join(self.local_repo_path, filename)
+                new_file = os.path.join(self.local_repo_path, new_filename)
+                os.rename(old_file, new_file)       
+
+   
     def set_everything(self):
-        instances = self.describe_instance()
-        self.generate_import_blocks(instances)
-        #Utilities.generate_tf_backend(self.local_repo_path,tfe_hostname="app.terraform.io", tfe_workspace="store-api-iac", tfe_org="rohit-kumar-hcp")
+        """
+        Setup the WorkFlow Steps.
+        """
         Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
         Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out={self.resource_name}.tf"])
-        Utilities.clean_generated_tf_code(resource="ec2", tf_file=f"{self.local_repo_path}/{self.resource_name}.tf")
+        
+        instances = self.describe_instance()
+        self.generate_import_blocks(instances)
         Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"])
         Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
