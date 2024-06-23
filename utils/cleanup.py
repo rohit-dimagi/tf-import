@@ -23,6 +23,10 @@ RESOURCE_CLEANUP = {
         "= 0",
         "= \[\]",
     ],
+    "aws_db_instance": [
+        "= 0",
+        "= \[\]",
+    ],
     "aws_route53_record": [
         "multivalue_answer_routing_policy",
         "= 0",
@@ -135,24 +139,6 @@ def process_terraform_plan(input_file):
 
     logger.info(f"Cleanup Resources with Patterns: {RESOURCE_CLEANUP}")
     logger.info(f"Generated Cleaned up File: {input_file}")
-
-
-def run_terraform_cmd(cmd):
-        logger.info("Formatting terraform code")
-        try:
-            completed_process = subprocess.run(
-                cmd,
-                text=True,
-                capture_output=True
-            )
-            if completed_process.returncode == 0:
-                logger.info(completed_process.stdout)
-            else:
-                logger.info(completed_process.stderr)
-            return completed_process.stdout,completed_process.stderr
-        except subprocess.CalledProcessError as e:
-           logger.error(f"Error during terraform {cmd}: {e}")
-           sys.exit(1)
 
 
 def cleanup_tf_plan_file(input_tf_file):

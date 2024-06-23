@@ -7,10 +7,6 @@ from loguru import logger
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="TF Import Script")
-    parser.add_argument("--env", dest="env",
-                        help="AWS Environment name ", type=str, required=True)
-    parser.add_argument("--workspace", dest="workspace",
-                        help="TFE Workspace Name ", type=str, required=True)
     parser.add_argument("--resource", dest="resource",
                         help="Resource Type ", type=str, required=True)
     parser.add_argument("--local-repo-path", dest="local_repo_path",
@@ -26,9 +22,7 @@ if __name__ == "__main__":
     if args.resource == "ec2":
         ec2_import = EC2ImportSetUp(
                         region=args.region,
-                        environment=args.env,
                         resource=args.resource,
-                        workspace=args.workspace,
                         local_repo_path=args.local_repo_path,
                         hosted_zone_name=args.hosted_zone_name,
                         filters=args.tag
@@ -38,11 +32,8 @@ if __name__ == "__main__":
     if args.resource == "rds":
         rds_import = RDSImportSetUp(
                         region=args.region,
-                        environment=args.env,
                         resource=args.resource,
-                        workspace=args.workspace,
                         local_repo_path=args.local_repo_path,
-                        #hosted_zone_name=args.hosted_zone_name,
                         filters=args.tag
                         )
         rds_import.set_everything()

@@ -12,13 +12,11 @@ class EC2ImportSetUp:
     Note: Target Group Attachement resource import is not supported by Provider
     """
 
-    def __init__(self, environment, workspace, region, resource, local_repo_path, hosted_zone_name, filters):
+    def __init__(self, region, resource, local_repo_path, hosted_zone_name, filters):
         self.client = Utilities.create_session(region=region, resource=resource)
         self.tmpl = Environment(loader=FileSystemLoader('templates'))
         self.region = region
         self.local_repo_path = local_repo_path
-        self.resource_name = f"{environment}_{region}_ec2_"
-        self.workspace = workspace
         self.hosted_zone_name = hosted_zone_name
         self.tag_filters = {key: value for key, value in filters} if filters else {}
 
