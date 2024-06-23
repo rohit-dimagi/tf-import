@@ -2,6 +2,7 @@
 import argparse
 from import_ec2 import EC2ImportSetUp
 from import_rds import RDSImportSetUp
+from import_eks import EKSImportSetUp
 
 from loguru import logger
 
@@ -38,3 +39,11 @@ if __name__ == "__main__":
                         )
         rds_import.set_everything()
     
+    if args.resource == "eks":
+        eks_import = EKSImportSetUp(
+                        region=args.region,
+                        resource=args.resource,
+                        local_repo_path=args.local_repo_path,
+                        filters=args.tag
+                        )
+        eks_import.set_everything()

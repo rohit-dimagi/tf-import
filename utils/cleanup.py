@@ -37,7 +37,9 @@ RESOURCE_CLEANUP = {
     ],
     "aws_eks_node_group": [
         "= 0",
-        "= \[\]"
+        "= \[\]",
+        "node_group_name_prefix",
+        "= \"lt-"
     ],
     "aws_security_group": [
         "name_prefix"

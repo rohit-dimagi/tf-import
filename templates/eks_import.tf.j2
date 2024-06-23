@@ -1,0 +1,25 @@
+
+import {
+  to = aws_eks_cluster.{{ cluster_name }}
+  id = "{{ cluster_name }}"
+}
+
+
+{%- for add_on in eks_add_ons %}
+import {
+  to = aws_eks_addon.add_on
+  id = "{{ cluster_name}}:{{ add_on }}"
+}
+{% endfor -%}
+
+{%- for node_group in node_groups %}
+import {
+  to = aws_eks_node_group.{{ node_group.name }}
+  id = "{{ cluster_name }}:{{ node_group.name }}"
+}
+
+import {
+  to = aws_launch_template.{{ node_group.launch_template }}
+  id = "{{ node_group.launch_template }}"
+}
+{%- endfor %}
