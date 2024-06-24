@@ -65,7 +65,6 @@ class RDSImportSetUp:
                             "security_groups": security_groups,
                         }
                         instances.append(instance_info) 
-        logger.error(instances)
         return instances
     
     def get_rds_clusters(self):
@@ -106,7 +105,6 @@ class RDSImportSetUp:
                         "cluster_instances": cluster_instances
                     }
                 clusters.append(cluster_info)
-            logger.error(cluster_info)
         return clusters
 
     def generate_import_blocks(self, db_instances=[], db_clusters=[]):         
@@ -148,7 +146,6 @@ class RDSImportSetUp:
         for instance in db_instances:
             logger.info(f"Importing Instance: {instance}")
             output_file_path = f"{self.local_repo_path}/imports_instance_{instance['identifier']}.tf"
-            logger.error(instance['security_groups'])
     
             context = {
                 'instance_identifier': instance["identifier"],
