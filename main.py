@@ -15,11 +15,15 @@ if __name__ == "__main__":
     parser.add_argument("--region", dest="region",
                         help="AWS Region", type=str, required=True)
     parser.add_argument("--hosted-zone-name", dest="hosted_zone_name",
-                        help="AWS Route53 hosted Zone", type=str, required=True)
+                        help="AWS Route53 hosted Zone", type=str)
     parser.add_argument('-t', '--tag', action='append', nargs=2, metavar=('key', 'value'),
                         help='Specify a tag filter as key value pair, e.g. -t TF_MANAGED true -t env dev')
     args = parser.parse_args()
 
+    if args.resource == "ec2" and not args.hosted_zone_name:
+        parser.error("--hosted-zone-name is required when resource is 'ec2'")
+    
+    
     if args.resource == "ec2":
         ec2_import = EC2ImportSetUp(
                         region=args.region,
