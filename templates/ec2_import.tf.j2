@@ -1,5 +1,5 @@
 import {
-  to = aws_instance.{{instance_details.instance_name }}
+  to = aws_instance.{{ instance_details.instance_name | replace(' ', '-') | lower }}
   id = "{{ instance_details.instance_id }}"
 }
 
@@ -20,7 +20,7 @@ import {
 
 {% if dns_exist %}
 import {
-  to = aws_route53_record.{{ instance_details.instance_name}}
-  id = "{{ zone_id ~ '_' ~ instance_details.instance_name ~ '.' ~ zone_name }}_A"
+  to = aws_route53_record.{{ instance_details.instance_name | replace(' ', '-') | lower }}
+  id = "{{ zone_id ~ '_' ~ instance_details.instance_name | replace(' ', '-') | lower ~ '.' ~ zone_name }}_A"
 }
 {% endif %}

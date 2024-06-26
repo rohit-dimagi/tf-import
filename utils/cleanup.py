@@ -49,6 +49,12 @@ RESOURCE_CLEANUP = {
         "= 0",
         "= \[\]",
     ],
+    "aws_lb_listener": [
+        "= 0"
+    ],
+    "aws_lb": [
+        "subnets "
+    ],
 }
 
 
