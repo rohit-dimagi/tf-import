@@ -18,8 +18,18 @@ import {
   id = "{{ cluster_name }}:{{ node_group.name }}"
 }
 
+{% if  node_group.launch_template != "" %}
 import {
-  to = aws_launch_template.{{ cluster_name }}-{{ node_group.launch_template }}
+  to = aws_launch_template.{{ cluster_name }}-{{ node_group.name.launch_template }}
   id = "{{ node_group.launch_template }}"
 }
+{% endif %}
+
+{% for asg_name in node_group.asg_names %}
+import {
+  to = aws_autoscaling_group.{{ cluster_name }}-{{ node_group.name }}-{{ asg_name }}
+  id = "{{ asg_name }}"
+}
+{% endfor %}
+
 {%- endfor %}

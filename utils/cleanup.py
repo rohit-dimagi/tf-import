@@ -59,6 +59,11 @@ RESOURCE_CLEANUP = {
     "aws_lb": [
         "subnets "
     ],
+    "aws_autoscaling_group": [
+        "= 0",
+        "= \[\]",
+        "availability_zones"
+    ],
 }
 
 

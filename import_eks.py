@@ -52,11 +52,15 @@ class EKSImportSetUp:
                     )['nodegroup']
 
                     # Retrieve the launch template ID if it exists
-                    launch_template_id = node_group_info.get('launchTemplate', {}).get('id', None)
+                    launch_template_id = node_group_info.get('launchTemplate', {}).get('id', "")
+                    
+                    # Retrieve the ASG names
+                    asg_names = [asg['name'] for asg in node_group_info.get('resources', {}).get('autoScalingGroups', [])]
 
                     node_group_detail = {
                         "name": node_group_info['nodegroupName'],
-                        "launch_template": launch_template_id
+                        "launch_template": launch_template_id,
+                        "asg_names": asg_names
                     }
                     node_groups.append(node_group_detail)
 
