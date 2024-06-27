@@ -105,7 +105,7 @@ class ALBImportSetUp:
             
             os.rename(output_file_path, f"{output_file_path}.imported")
             cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{load_balancer['lb_name']}-{load_balancer['lb_type']}.tf")
-            exit()
+            
         for filename in os.listdir(self.local_repo_path):
             if filename.endswith('.imported'):
                 new_filename = filename.replace('.imported', '')

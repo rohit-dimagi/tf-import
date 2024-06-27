@@ -18,9 +18,9 @@ import {
 {% endif -%}
 {% endfor -%}
 
-{% if dns_exist %}
+{% if dns_record_name != "" %}
 import {
   to = aws_route53_record.{{ instance_details.instance_name | replace(' ', '-') | lower }}
-  id = "{{ zone_id ~ '_' ~ instance_details.instance_name | replace(' ', '-') | lower ~ '.' ~ zone_name }}_A"
+  id = "{{ zone_id ~ '_' ~ dns_record_name }}_A"
 }
 {% endif %}

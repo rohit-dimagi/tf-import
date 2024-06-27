@@ -89,11 +89,13 @@ class EC2ImportSetUp:
         record_sets = paginator.paginate(HostedZoneId=hosted_zone_id)
 
         record_found = False
+        record_name = None
         try:
             for page in record_sets:
                 for record_set in page['ResourceRecordSets']:
                     for record in record_set.get('ResourceRecords', []):
                         if record['Value'] == ip:
+                            record_name = record_set['Name']
                             record_found = True
                             break
                 if record_found:
@@ -101,10 +103,9 @@ class EC2ImportSetUp:
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchHostedZone':
                 logger.error(f"No hosted zone found with ID: {hosted_zone_id}")
-            return False
-       
+            return False, None
 
-        return record_found
+        return record_found, record_name
 
     def generate_import_blocks(self, instance_details):
         """
@@ -120,12 +121,13 @@ class EC2ImportSetUp:
         for instance in instance_details:
             logger.info(f"Importing : {instance}")
             
-            is_dns_exist =  self.check_dns_record( ip=instance['private_ip'], hosted_zone_id=hosted_zone_id)
+            is_dns_exist, record_name =  self.check_dns_record( ip=instance['private_ip'], hosted_zone_id=hosted_zone_id)
+            
             context = {
                 'instance_details': instance,
                 'zone_id': hosted_zone_id,
                 'zone_name': self.hosted_zone_name,
-                'dns_exist': is_dns_exist
+                'dns_record_name': record_name if is_dns_exist else ""
             }
 
             rendered_template = template.render(context)
@@ -137,7 +139,7 @@ class EC2ImportSetUp:
             Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{instance['instance_name']}.tf"])
             os.rename(output_file_path, f"{output_file_path}.imported")
             cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{instance['instance_name']}.tf")
-
+            
         for filename in os.listdir(self.local_repo_path):
             if filename.endswith('.imported'):
                 new_filename = filename.replace('.imported', '')
