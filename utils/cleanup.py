@@ -10,6 +10,10 @@ RESOURCE_CLEANUP = {
         "null",
         "= {}"
     ],
+    "multiline_pattern":[
+        r'target_failover\s*\{\s*\n\s*\}',
+        r'target_health_state\s*\{\s*\n\s*\}',
+    ],
     "aws_instance": [
         "= 0",
         "= \[\]",
@@ -81,6 +85,17 @@ def remove_global_lines(tf_file, list_to_cleanup):
     logger.info(f"Generated intermediate file to process: {output_file}")
     return output_file
 
+def remove_multiline(file, patterns):
+    with open(file, "r") as readfile:
+        content = readfile.read()
+
+        for pattern in patterns:
+            matches = re.findall(pattern, content, re.MULTILINE | re.DOTALL)
+            # Remove the matches from the content
+            content = re.sub(pattern, '', content, flags=re.MULTILINE | re.DOTALL)
+
+    with open(file, "w") as writefile:
+        writefile.write(content)
 
 def should_remove_line(line, resource_type, custom_pattern=[]):
     """
@@ -103,6 +118,8 @@ def process_terraform_plan(input_file):
     new_lines = []
     in_resource_block = False
     current_resource_type = None
+
+    # Special case ebs_volume Cleanup, Removing iops when type is gp2
     is_iops_set = False
     is_gp2_set = False
     
@@ -156,4 +173,5 @@ def cleanup_tf_plan_file(input_tf_file):
     
     # Process resource Specific Blocks
     process_terraform_plan(level1_cleanup_file)
+    remove_multiline(input_tf_file, RESOURCE_CLEANUP["multiline_pattern"])
     
