@@ -57,6 +57,9 @@ RESOURCE_CLEANUP = {
     "aws_lb": [
         "subnets "
     ],
+    "aws_lb_target_group":[
+        "= 0"
+    ],
     "aws_autoscaling_group": [
         "= 0",
         "= \[\]",
@@ -110,6 +113,8 @@ def should_remove_line(line, resource_type, custom_pattern=[]):
         patterns = custom_pattern 
     
     for pattern in patterns:
+        if "min_size" in line and resource_type in ('aws_autoscaling_group', 'aws_eks_node_group'): # for EKS Cluster aws_autoscaling_group, aws_eks_node_group
+                return False
         if re.search(pattern, line):
             return True
     return False

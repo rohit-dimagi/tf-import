@@ -64,18 +64,18 @@ import {
 
 
 {% if kms_key_id != "" %}
-import {
-  to = aws_kms_key.{{ instance_identifier }}
-  id = "{{ kms_key_id }}"
-}
+#import {
+#  to = aws_kms_key.{{ instance_identifier }}
+#  id = "{{ kms_key_id }}"
+#}
 {% endif -%}
 
 
 {% for sg in security_groups %}
-import {
-  to = aws_security_group.{{ instance_identifier }}_instance_{{ loop.index }}
-  id = "{{ sg }}"
-}
+#import {
+#  to = aws_security_group.{{ instance_identifier }}_instance_{{ loop.index }}
+#  id = "{{ sg }}"
+#}
 {% endfor -%}
 
 {% for db_param_group in db_parameter_groups %}

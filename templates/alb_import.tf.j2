@@ -8,10 +8,10 @@ import {
 {% set imported_target_groups = {} %}
 
 {% for load_balancer_listener in load_balancer_listeners %}
-import {
-  to = aws_lb_listener.{{ load_balancer_name }}-{{ load_balancer_listener.listener_port }}
-  id = "{{ load_balancer_listener.listener_arn }}"
-}
+#import {
+#  to = aws_lb_listener.{{ load_balancer_name }}-{{ load_balancer_listener.listener_port }}
+#  id = "{{ load_balancer_listener.listener_arn }}"
+#}
 
 {% for target_group in load_balancer_listener.target_groups %}
 {% set target_group_parts = target_group.split('/') %}
