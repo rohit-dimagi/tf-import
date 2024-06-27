@@ -3,3 +3,5 @@
 .terraform/
 import/
 dump/
+__pycache__/
+utils/__pycache__/
