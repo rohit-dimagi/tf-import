@@ -5,6 +5,7 @@ import os
 from botocore.exceptions import ClientError
 from utils.cleanup import cleanup_tf_plan_file
 import sys
+import re
 class EC2ImportSetUp:
     """
     Import Block for EC2 Import.
@@ -36,6 +37,10 @@ class EC2ImportSetUp:
             if zone['Name'] == f"{self.hosted_zone_name}.":
                 return zone['HostedZoneId']
     
+    def sanitize_name(self, filename):
+        # Replace invalid characters with an underscore
+        return re.sub(r'[<>:"/\\|?*]', '_', filename)
+    
     
     def describe_instance(self):
         """
@@ -60,7 +65,7 @@ class EC2ImportSetUp:
             
             for tag in instance.tags:
                 if tag['Key'] == 'Name':
-                    instance_info["instance_name"] = tag['Value']
+                    instance_info["instance_name"] = self.sanitize_name(tag['Value'])
                     break
             
             for volume in instance.volumes.all():

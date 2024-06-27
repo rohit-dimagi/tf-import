@@ -5,18 +5,25 @@ import {
 }
 
 
+{% set imported_target_groups = {} %}
+
 {% for load_balancer_listener in load_balancer_listeners %}
 import {
   to = aws_lb_listener.{{ load_balancer_name }}-{{ load_balancer_listener.listener_port }}
   id = "{{ load_balancer_listener.listener_arn }}"
 }
+
 {% for target_group in load_balancer_listener.target_groups %}
 {% set target_group_parts = target_group.split('/') %}
+{% set target_group_key = target_group_parts[-2] %}
 
+{%- if target_group_key not in imported_target_groups %}
 import {
-  to = aws_lb_target_group.{{ target_group_parts[-2] }}-{{ load_balancer_listener.listener_port }}
+  to = aws_lb_target_group.{{ target_group_key }}-{{ load_balancer_listener.listener_port }}
   id = "{{ target_group }}"
 }
+{% set _ = imported_target_groups.update({target_group_key: True}) %}
+{% endif %}
 
 {% endfor %}
 {% endfor %}
