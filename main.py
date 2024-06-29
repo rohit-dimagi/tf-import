@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("--local-repo-path", dest="local_repo_path", help="Local Repo Path", type=str, required=True)
     parser.add_argument("--region", dest="region", help="AWS Region", type=str, required=True)
     parser.add_argument("--hosted-zone-name", dest="hosted_zone_name", help="AWS Route53 hosted Zone", type=str)
-    parser.add_argument("-t", "--tag", action="append", nargs=2, metavar=("key", "value"), help="Specify a tag filter as key value pair, e.g. -t TF_MANAGED true -t env dev")
+    parser.add_argument("--tag", action="append", nargs=2, metavar=("key", "value"), help="Specify a tag filter as key value pair, e.g. -t TF_MANAGED true -t env dev")
     args = parser.parse_args()
 
     if args.resource == "ec2" and not args.hosted_zone_name:
