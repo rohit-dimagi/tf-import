@@ -2,3 +2,4 @@ boto3==1.24.69
 Jinja2==3.1.4
 python-dotenv==1.0.1
 loguru==0.7.2
+black==24.4.2
