@@ -82,6 +82,7 @@ class EC2ImportSetUp:
                 instance_info['Volumes'].append(attachment_info)
 
             instance_details.append(instance_info)
+        logger.info(f"Total EC2 Instances Found: { len(instance_details) }")
         return instance_details
 
     def check_dns_record(self, ip, hosted_zone_id):

@@ -63,7 +63,8 @@ RESOURCE_CLEANUP = {
     "aws_autoscaling_group": [
         "= 0",
         "= \[\]",
-        "availability_zones"
+        "availability_zones",
+        "name_prefix"
     ],
 }
 
@@ -170,7 +171,7 @@ def process_terraform_plan(input_file):
     with open(input_file, 'w') as new_file:
         new_file.writelines(new_lines)
 
-    logger.info(f"Cleanup Resources with Patterns: {RESOURCE_CLEANUP}")
+    #logger.info(f"Cleanup Resources with Patterns: {RESOURCE_CLEANUP}")
     logger.info(f"Generated Cleaned up File: {input_file}")
 
 

@@ -64,6 +64,21 @@ class EKSImportSetUp:
                     }
                     node_groups.append(node_group_detail)
 
+                # Handle Case where Node groups are managed Externally By An AutoScaling Group. Those can be searched by Tags k8s.io/cluster-autoscaler/<Cluster Name>: true
+                asg_client = Utilities.create_client(region=self.region, resource='autoscaling')
+                paginator = asg_client.get_paginator('describe_auto_scaling_groups')
+                external_asgs = []
+                
+                for page in paginator.paginate():
+                    for asg in page['AutoScalingGroups']:
+                        tags = {tag['Key']: tag['Value'] for tag in asg['Tags']}
+                        if tags.get(f'k8s.io/cluster-autoscaler/{cluster_name}') == 'true':
+                            launch_template_id = asg['MixedInstancesPolicy']['LaunchTemplate']['LaunchTemplateSpecification']['LaunchTemplateId']
+                            external_asgs.append({
+                                "asg_name": asg['AutoScalingGroupName'],
+                                "launch_template": launch_template_id
+                            })
+                
                 # Retrieve addons for the cluster
                 addon_names = self.client.list_addons(clusterName=cluster_name).get('addons', [])
                 addons = []
@@ -78,8 +93,11 @@ class EKSImportSetUp:
                     "vpc_id": cluster['resourcesVpcConfig']['vpcId'],
                     "security_groups": cluster['resourcesVpcConfig']['securityGroupIds'],
                     "iam_role": cluster['roleArn'].split('/')[-1],
+                    "manage_external_asgs": external_asgs
                 }
                 cluster_details.append(cluster_detail)
+        
+        logger.info(f"Total EKS Cluster Found: { len(cluster_details) }")
 
         return cluster_details
 
@@ -101,6 +119,7 @@ class EKSImportSetUp:
                 'cluster_name': eks_cluster['cluster_name'],
                 'eks_add_ons': eks_cluster['eks_add_ons'],
                 'node_groups': eks_cluster['node_groups'],
+                'manage_external_asgs': eks_cluster['manage_external_asgs']
             }
 
             rendered_template = template.render(context)

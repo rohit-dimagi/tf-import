@@ -71,7 +71,8 @@ class ALBImportSetUp:
                     "security_groups": lb.get('SecurityGroups', []),
                 }
                 lb_details_list.append(lb_details)
-
+        logger.info(f"Total ALB Found: { len(lb_details) }")
+        
         return lb_details_list
 
 

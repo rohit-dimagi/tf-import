@@ -65,6 +65,9 @@ class RDSImportSetUp:
                             "security_groups": security_groups,
                         }
                         instances.append(instance_info) 
+        
+        logger.info(f"Total RDS Instance Found: { len(instances) }")
+
         return instances
     
     def get_rds_clusters(self):
@@ -105,6 +108,7 @@ class RDSImportSetUp:
                         "cluster_instances": cluster_instances
                     }
                 clusters.append(cluster_info)
+        logger.info(f"Total RDS Clusters Found: { len(clusters) }")
         return clusters
 
     def generate_import_blocks(self, db_instances=[], db_clusters=[]):         

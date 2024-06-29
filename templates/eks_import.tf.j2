@@ -33,3 +33,19 @@ import {
 {% endfor %}
 
 {%- endfor %}
+
+
+
+{%- for manage_external_asg in manage_external_asgs %}
+
+import {
+  to = aws_launch_template.{{ cluster_name }}-{{ manage_external_asg.launch_template }}
+  id = "{{ manage_external_asg.launch_template }}"
+}
+
+import {
+  to = aws_autoscaling_group.{{ cluster_name }}-{{ manage_external_asg.asg_name }}
+  id = "{{ manage_external_asg.asg_name }}"
+}
+{% endfor %}
+

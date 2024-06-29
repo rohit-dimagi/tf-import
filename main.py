@@ -35,7 +35,7 @@ if __name__ == "__main__":
                         )
         ec2_import.set_everything()
     
-    if args.resource == "rds":
+    elif args.resource == "rds":
         rds_import = RDSImportSetUp(
                         region=args.region,
                         resource=args.resource,
@@ -44,7 +44,7 @@ if __name__ == "__main__":
                         )
         rds_import.set_everything()
     
-    if args.resource == "eks":
+    elif args.resource == "eks":
         eks_import = EKSImportSetUp(
                         region=args.region,
                         resource=args.resource,
@@ -53,7 +53,7 @@ if __name__ == "__main__":
                         )
         eks_import.set_everything()
 
-    if args.resource == "alb":
+    elif args.resource == "alb":
         eks_import = ALBImportSetUp(
                         region=args.region,
                         resource=args.resource,
@@ -61,3 +61,6 @@ if __name__ == "__main__":
                         filters=args.tag
                         )
         eks_import.set_everything()
+    
+    else:
+        logger.info(f"Import Not currently supported for {args.resource}")
