@@ -68,34 +68,7 @@ main.py: error: the following arguments are required: --resource, --local-repo-p
 if everything is setup properly you will see output similar to above 
 
 
-## Examples
-* Import EC2 instances from region eu-west-1 with a hosted-zone name  and a tag to limit the import radius. Multiple tags supported.
-```
-python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> -t <TAG NAME> <TAG VALUE>
-```
 
-* Import ALL EC2 instances from region eu-west-1
-```
-python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> 
-```
-
-* Import All RDS Cluster and instances from a particular region
-```
-python main.py --resource rds --local-repo-path <dir to put the generated files> --region < aws region name> 
-
-```
-
-* Import All EKS Cluster from a particular region
-```
-python main.py --resource eks --local-repo-path <dir to put the generated files> --region < aws region name> 
-
-```
-
-* Import All ALB  from a particular region
-```
-python main.py --resource alb --local-repo-path <dir to put the generated files> --region < aws region name> 
-
-```
 
 ## Project Structure
 ```
@@ -137,7 +110,7 @@ This document describes the workflow of the `ResourceImportSetUp` class.
 graph TD;
     A[Start] --> B[Initialize Resource ImportSetUp];
     B --> C[Describe Resource];
-    C --> D[ Build Resource Dict];
+    C --> D[ Build Resource Dict, Filter & Skip tags];
     D --> E[Pass Dict to Jinja Template];
     E --> F[Generate Import Blocks];
     F --> G[Generate Terraform Provider];
@@ -146,5 +119,55 @@ graph TD;
     I --> J[Clean Generated TF Code];
     J --> K[Terraform Format];
     K --> L[End];
+```
+
+## Importing Resources
+
+### Follow these steps:-
+
+1. Get AWS Access keys and put it into `default` profile under ` ~/.aws/credentials`
+
+2. Create Folder where you want to store the generated files.
+    * This can be an existing repo
+    * This can be an Empty Directory
+    * Make sure to updated aws provider version to latest if it's an existing repo.
+    * For Empty directory the script will create one with latest provider configured.
+
+3. Make Use of resource tags to import specific resources and avoid bulk import. examples given below
+
+4. Once resources are generated inspect the final plan to check for any changes.
+    * Add `ignore lifecycle rule` to ignore any changes.
+    * Might required some other cleanup as well, depends on the situation.
+
+5. Once you are done with `terraform apply`. Add a tag `TF_IMPORTED: true` to these imported resources to avoid duplicate imports.
+
+
+## Examples
+* Import EC2 instances from region eu-west-1 with a hosted-zone name  and a tag to limit the import radius. Multiple tags supported.
+```
+python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> -t <TAG NAME> <TAG VALUE>
+```
+
+* Import ALL EC2 instances from region eu-west-1
+```
+python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> 
+```
+
+* Import All RDS Cluster and instances from a particular region
+```
+python main.py --resource rds --local-repo-path <dir to put the generated files> --region < aws region name> 
+
+```
+
+* Import All EKS Cluster from a particular region
+```
+python main.py --resource eks --local-repo-path <dir to put the generated files> --region < aws region name> 
+
+```
+
+* Import All ALB  from a particular region
+```
+python main.py --resource alb --local-repo-path <dir to put the generated files> --region < aws region name> 
+
 ```
 
