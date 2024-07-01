@@ -1,4 +1,4 @@
-from utils.utilities import Utilities
+from utils.utilities import Utilities, SkipTag
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
 import os
@@ -39,6 +39,11 @@ class ALBImportSetUp:
             lb_tags = self.client.describe_tags(ResourceArns=[lb_arn])["TagDescriptions"][0]["Tags"]
             lb_tags_dict = {tag["Key"]: tag["Value"] for tag in lb_tags}
 
+            # Skip instance if TF_IMPORTED tag is set to true
+            if lb_tags_dict.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
+                logger.info(f"Skipping EKS Cluster  {lb["LoadBalancerName"]} where TF_IMPORTED tag is set")
+                continue
+            
             # Check if the load balancer matches the tag filters
             if all(lb_tags_dict.get(key) == value for key, value in self.tag_filters.items()):
                 # Retrieve listeners for the load balancer
@@ -64,7 +69,7 @@ class ALBImportSetUp:
                     "security_groups": lb.get("SecurityGroups", []),
                 }
                 lb_details_list.append(lb_details)
-        logger.info(f"Total ALB Found: { len(lb_details) }")
+        logger.info(f"Total ALB Found: { len(lb_details_list) }")
 
         return lb_details_list
 
