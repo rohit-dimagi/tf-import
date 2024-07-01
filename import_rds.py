@@ -1,4 +1,4 @@
-from utils.utilities import Utilities
+from utils.utilities import Utilities, SkipTag
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
 import sys
@@ -50,6 +50,11 @@ class RDSImportSetUp:
                 tags_response = self.client.list_tags_for_resource(ResourceName=db_instance_arn)
                 tags = {tag["Key"]: tag["Value"] for tag in tags_response["TagList"]}
 
+                # Skip instance if TF_IMPORTED tag is set to true
+                if tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
+                    logger.info(f"Skipping RDS Instance {db_instance["DBInstanceIdentifier"]} where TF_IMPORTED tag is set")
+                    continue
+
                 # Check if the instance matches all tag filters:
                 if "DBClusterIdentifier" not in db_instance:
                     if all(tags.get(key) == value for key, value in self.tag_filters.items()):
@@ -81,6 +86,12 @@ class RDSImportSetUp:
                 # Get tags for the instance
                 tags_response = self.client.list_tags_for_resource(ResourceName=db_cluster_arn)
                 tags = {tag["Key"]: tag["Value"] for tag in tags_response["TagList"]}
+                
+                # Skip instance if TF_IMPORTED tag is set to true
+                if tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
+                    logger.info(f"Skipping RDS Instance {db_cluster["DBInstanceIdentifier"]} where TF_IMPORTED tag is set")
+                    continue            
+
 
                 # Check if the instance matches all tag filters
                 if all(tags.get(key) == value for key, value in self.tag_filters.items()):
@@ -116,7 +127,7 @@ class RDSImportSetUp:
 
         for cluster in db_clusters:
             logger.info(f"Importing : {cluster}")
-            output_file_path = f"{self.local_repo_path}/imports_cluster_{cluster['identifier']}.tf"
+            output_file_path = f"{self.local_repo_path}/import-cluster-{cluster['identifier']}.tf"
             context = {
                 "rds_cluster_identifier": cluster["identifier"],
                 "cluster_parameter": cluster["cluster_parameter"],
@@ -145,7 +156,7 @@ class RDSImportSetUp:
 
         for instance in db_instances:
             logger.info(f"Importing Instance: {instance}")
-            output_file_path = f"{self.local_repo_path}/imports_instance_{instance['identifier']}.tf"
+            output_file_path = f"{self.local_repo_path}/import-instance-{instance['identifier']}.tf"
 
             context = {
                 "instance_identifier": instance["identifier"],
