@@ -1,4 +1,4 @@
-from utils.utilities import Utilities
+from utils.utilities import Utilities, SkipTag
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
 import os
@@ -34,6 +34,11 @@ class EKSImportSetUp:
 
             # Retrieve tags for the cluster
             cluster_tags = self.client.list_tags_for_resource(resourceArn=cluster["arn"])["tags"]
+
+            # Skip instance if TF_IMPORTED tag is set to true
+            if cluster_tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
+                logger.info(f"Skipping EKS Cluster  {cluster_name} where TF_IMPORTED tag is set")
+                continue
 
             # Check if the cluster matches the tag filters
             if all(cluster_tags.get(key) == value for key, value in self.tag_filters.items()):
