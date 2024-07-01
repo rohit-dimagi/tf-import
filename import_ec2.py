@@ -1,4 +1,4 @@
-from utils.utilities import Utilities
+from utils.utilities import Utilities, SkipTag
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
 import os
@@ -54,6 +54,12 @@ class EC2ImportSetUp:
         instance_details = []
 
         for instance in instances:
+            instance_tags = {tag['Key']: tag['Value'] for tag in instance.tags}
+            #Skip instances with the TF_IMPORTED tag set to true
+            if instance_tags.get('TF_IMPORTED') == SkipTag.TF_IMPORTED.value :
+               logger.info(f"Skipping Instance {instance.id} where TF_IMPORTED tag is set")
+               continue
+            
             instance_info = {"instance_id": instance.id, "private_ip": instance.private_ip_address, "vpc_id": instance.vpc_id, "instance_name": None, "Volumes": []}
 
             for tag in instance.tags:

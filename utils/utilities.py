@@ -6,8 +6,14 @@ from loguru import logger
 import sys
 from jinja2 import Environment, FileSystemLoader
 import os
-import json
+from enum import Enum
 
+class SkipTag(Enum):
+    """
+    SKip Resources Containg this tag
+    """
+
+    TF_IMPORTED = "true"
 
 class Utilities:
     """
@@ -66,24 +72,6 @@ class Utilities:
         tmpl = Environment(loader=FileSystemLoader("templates"))
         template = tmpl.get_template("providers.tf.j2")
         context = {"cloud_provider_region": region}
-
-        rendered_template = template.render(context)
-
-        with open(output_file_path, "w") as f:
-            f.write(rendered_template)
-
-    @staticmethod
-    def generate_tf_backend(local_repo_path, tfe_hostname, tfe_org, tfe_workspace):
-        output_file_path = f"{local_repo_path}/backend.tf"
-
-        if os.path.exists(output_file_path):
-            logger.info(f"File {output_file_path} already exists.")
-            return
-
-        tmpl = Environment(loader=FileSystemLoader("templates"))
-        template = tmpl.get_template("backend.tf.j2")
-
-        context = {"tfe_hostname": tfe_hostname, "tfe_org_name": tfe_org, "tfe_workspace_name": tfe_workspace}
 
         rendered_template = template.render(context)
 

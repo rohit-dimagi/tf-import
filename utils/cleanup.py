@@ -15,6 +15,7 @@ RESOURCE_CLEANUP = {
         "= 0",
         "= \[\]",
         "ipv6_address_count",
+        '= "lt-'
     ],
     "aws_rds_cluster": [
         "= 0",
