@@ -8,12 +8,14 @@ from jinja2 import Environment, FileSystemLoader
 import os
 from enum import Enum
 
+
 class SkipTag(Enum):
     """
     SKip Resources Containg this tag
     """
 
     TF_IMPORTED = "true"
+
 
 class Utilities:
     """

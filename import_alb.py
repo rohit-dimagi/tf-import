@@ -43,7 +43,7 @@ class ALBImportSetUp:
             if lb_tags_dict.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
                 logger.info(f"Skipping EKS Cluster  {lb["LoadBalancerName"]} where TF_IMPORTED tag is set")
                 continue
-            
+
             # Check if the load balancer matches the tag filters
             if all(lb_tags_dict.get(key) == value for key, value in self.tag_filters.items()):
                 # Retrieve listeners for the load balancer
@@ -68,14 +68,7 @@ class ALBImportSetUp:
                         s3_bucket = attr["Value"]
 
                 # Create the lb_details dictionary
-                lb_details = {
-                    "lb_arn": lb_arn,
-                    "lb_name": lb["LoadBalancerName"],
-                    "lb_type": lb_type,
-                    "lb_listeners": listener_details,
-                    "security_groups": lb.get("SecurityGroups", []),
-                    "s3_bucket": s3_bucket if not None else ""
-                }
+                lb_details = {"lb_arn": lb_arn, "lb_name": lb["LoadBalancerName"], "lb_type": lb_type, "lb_listeners": listener_details, "security_groups": lb.get("SecurityGroups", []), "s3_bucket": s3_bucket if not None else ""}
 
                 lb_details_list.append(lb_details)
         logger.info(f"Total ALB Found: { len(lb_details_list) }")
@@ -100,7 +93,7 @@ class ALBImportSetUp:
                 "load_balancer_name": load_balancer["lb_name"],
                 "load_balancer_listeners": load_balancer["lb_listeners"],
                 "security_groups": load_balancer["security_groups"],
-                "s3_bucket": load_balancer["s3_bucket"]
+                "s3_bucket": load_balancer["s3_bucket"],
             }
 
             rendered_template = template.render(context)

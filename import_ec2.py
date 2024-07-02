@@ -36,7 +36,7 @@ class EC2ImportSetUp:
             if zone["Name"] == f"{self.hosted_zone_name}.":
                 return zone["HostedZoneId"]
         return None
-    
+
     def sanitize_name(self, filename):
         # Replace invalid characters with an underscore
         return re.sub(r'[<>:"/\\|?*]', "_", filename)
@@ -54,12 +54,12 @@ class EC2ImportSetUp:
         instance_details = []
 
         for instance in instances:
-            instance_tags = {tag['Key']: tag['Value'] for tag in instance.tags}
-            #Skip instances with the TF_IMPORTED tag set to true
-            if instance_tags.get('TF_IMPORTED') == SkipTag.TF_IMPORTED.value :
-               logger.info(f"Skipping Instance {instance.id} where TF_IMPORTED tag is set")
-               continue
-            
+            instance_tags = {tag["Key"]: tag["Value"] for tag in instance.tags}
+            # Skip instances with the TF_IMPORTED tag set to true
+            if instance_tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
+                logger.info(f"Skipping Instance {instance.id} where TF_IMPORTED tag is set")
+                continue
+
             instance_info = {"instance_id": instance.id, "private_ip": instance.private_ip_address, "vpc_id": instance.vpc_id, "instance_name": None, "Volumes": []}
 
             for tag in instance.tags:
@@ -120,7 +120,7 @@ class EC2ImportSetUp:
         if hosted_zone_id is None:
             logger.error(f"Hosted Route53 Zone doesn't Exist , Please Verify: {self.hosted_zone_name}")
             sys.exit(1)
-        
+
         for instance in instance_details:
             logger.info(f"Importing : {instance}")
 

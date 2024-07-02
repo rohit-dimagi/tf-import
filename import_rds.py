@@ -86,12 +86,11 @@ class RDSImportSetUp:
                 # Get tags for the instance
                 tags_response = self.client.list_tags_for_resource(ResourceName=db_cluster_arn)
                 tags = {tag["Key"]: tag["Value"] for tag in tags_response["TagList"]}
-                
+
                 # Skip instance if TF_IMPORTED tag is set to true
                 if tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
                     logger.info(f"Skipping RDS Instance {db_cluster["DBInstanceIdentifier"]} where TF_IMPORTED tag is set")
-                    continue            
-
+                    continue
 
                 # Check if the instance matches all tag filters
                 if all(tags.get(key) == value for key, value in self.tag_filters.items()):
