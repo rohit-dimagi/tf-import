@@ -171,3 +171,10 @@ python main.py --resource alb --local-repo-path <dir to put the generated files>
 
 ```
 
+
+
+
+
+## Current Issue
+* AWS ALB Target Group Attachment doesn't support Import
+* AWS ALB Listeners import has an open issue in github https://github.com/hashicorp/terraform-provider-aws/issues/37211

@@ -60,6 +60,13 @@ class ALBImportSetUp:
                     listener_detail = {"listener_arn": listener_arn, "listener_port": listener_port, "target_groups": target_group_arns}
                     listener_details.append(listener_detail)
 
+                # Retrieve S3 bucket details for ALB logs
+                lb_attributes = self.client.describe_load_balancer_attributes(LoadBalancerArn=lb_arn)["Attributes"]
+                s3_bucket = None
+                for attr in lb_attributes:
+                    if attr["Key"] == "access_logs.s3.bucket":
+                        s3_bucket = attr["Value"]
+
                 # Create the lb_details dictionary
                 lb_details = {
                     "lb_arn": lb_arn,
@@ -67,7 +74,9 @@ class ALBImportSetUp:
                     "lb_type": lb_type,
                     "lb_listeners": listener_details,
                     "security_groups": lb.get("SecurityGroups", []),
+                    "s3_bucket": s3_bucket if not None else ""
                 }
+
                 lb_details_list.append(lb_details)
         logger.info(f"Total ALB Found: { len(lb_details_list) }")
 
@@ -91,6 +100,7 @@ class ALBImportSetUp:
                 "load_balancer_name": load_balancer["lb_name"],
                 "load_balancer_listeners": load_balancer["lb_listeners"],
                 "security_groups": load_balancer["security_groups"],
+                "s3_bucket": load_balancer["s3_bucket"]
             }
 
             rendered_template = template.render(context)

@@ -8,6 +8,7 @@ import {
 {% set imported_target_groups = {} %}
 
 {% for load_balancer_listener in load_balancer_listeners %}
+## GITHUB ISSUE https://github.com/hashicorp/terraform-provider-aws/issues/37211
 #import {
 #  to = aws_lb_listener.{{ load_balancer_name }}-{{ load_balancer_listener.listener_port }}
 #  id = "{{ load_balancer_listener.listener_arn }}"
@@ -27,3 +28,10 @@ import {
 
 {% endfor %}
 {% endfor %}
+
+{% if s3_bucket != "" %}
+import {
+ to = aws_s3_bucket.{{ load_balancer_name }}-{{ s3_bucket }}
+  id = "{{ s3_bucket }}"
+}
+{% endif %}
