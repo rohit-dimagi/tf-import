@@ -70,7 +70,7 @@ class Utilities:
         if os.path.exists(output_file_path):
             logger.info(f"File {output_file_path} already exists.")
             return
-
+        logger.info(f"Creating providers.tf file inside {local_repo_path}")
         tmpl = Environment(loader=FileSystemLoader("templates"))
         template = tmpl.get_template("providers.tf.j2")
         context = {"cloud_provider_region": region}

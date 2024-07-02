@@ -20,7 +20,7 @@ import {
 
 {% if  node_group.launch_template != "" %}
 import {
-  to = aws_launch_template.{{ cluster_name }}-{{ node_group.name.launch_template }}
+  to = aws_launch_template.{{ cluster_name }}-{{ node_group.launch_template }}
   id = "{{ node_group.launch_template }}"
 }
 {% endif %}
