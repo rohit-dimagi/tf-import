@@ -14,10 +14,11 @@ class EKSImportSetUp:
     Note: Target Group Attachement resource import is not supported by Provider
     """
 
-    def __init__(self, region, resource, local_repo_path, filters):
-        self.client = Utilities.create_client(region=region, resource=resource)
+    def __init__(self, region, resource, local_repo_path, filters, profile):
+        self.client = Utilities.create_client(region=region, resource=resource, profile=profile)
         self.tmpl = Environment(loader=FileSystemLoader("templates"))
         self.region = region
+        self.aws_profile = profile
         self.local_repo_path = local_repo_path
         self.tag_filters = {key: value for key, value in filters} if filters else {}
 
@@ -59,7 +60,7 @@ class EKSImportSetUp:
                     node_groups.append(node_group_detail)
 
                 # Handle Case where Node groups are managed Externally By An AutoScaling Group. Those can be searched by Tags k8s.io/cluster-autoscaler/<Cluster Name>: true
-                asg_client = Utilities.create_client(region=self.region, resource="autoscaling")
+                asg_client = Utilities.create_client(region=self.region, resource="autoscaling", profile=self.aws_profile)
                 paginator = asg_client.get_paginator("describe_auto_scaling_groups")
                 external_asgs = []
 
@@ -113,7 +114,7 @@ class EKSImportSetUp:
             with open(output_file_path, "w") as f:
                 f.write(rendered_template)
 
-            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{eks_cluster['cluster_name']}.tf"])
+            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{eks_cluster['cluster_name']}.tf"], profile=self.aws_profile)
             os.rename(output_file_path, f"{output_file_path}.imported")
             cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{eks_cluster['cluster_name']}.tf")
 
@@ -129,9 +130,9 @@ class EKSImportSetUp:
         Setup the WorkFlow Steps.
         """
         Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"], profile=self.aws_profile)
 
         eks_clusters = self.describe_eks_cluster()
         self.generate_import_blocks(eks_clusters)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"])
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"], profile=self.aws_profile)
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"], profile=self.aws_profile)

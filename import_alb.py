@@ -14,10 +14,11 @@ class ALBImportSetUp:
     Note: Target Group Attachement resource import is not supported by Provider
     """
 
-    def __init__(self, region, resource, local_repo_path, filters):
-        self.client = Utilities.create_client(region=region, resource="elbv2")
+    def __init__(self, region, resource, local_repo_path, filters, profile):
+        self.client = Utilities.create_client(region=region, resource="elbv2", profile=profile)
         self.tmpl = Environment(loader=FileSystemLoader("templates"))
         self.region = region
+        self.aws_profile = profile
         self.local_repo_path = local_repo_path
         self.tag_filters = {key: value for key, value in filters} if filters else {}
 
@@ -102,7 +103,7 @@ class ALBImportSetUp:
             with open(output_file_path, "w") as f:
                 f.write(rendered_template)
 
-            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{load_balancer['lb_name']}-{load_balancer['lb_type']}.tf"])
+            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{load_balancer['lb_name']}-{load_balancer['lb_type']}.tf"], profile=self.aws_profile)
 
             os.rename(output_file_path, f"{output_file_path}.imported")
             cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{load_balancer['lb_name']}-{load_balancer['lb_type']}.tf")
@@ -119,9 +120,9 @@ class ALBImportSetUp:
         Setup the WorkFlow Steps.
         """
         Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"], profile=self.aws_profile)
 
         load_balancers = self.describe_load_balancers()
         self.generate_import_blocks(load_balancers)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"])
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"], profile=self.aws_profile)
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"], profile=self.aws_profile)

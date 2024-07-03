@@ -7,6 +7,7 @@ import sys
 from jinja2 import Environment, FileSystemLoader
 import os
 from enum import Enum
+from botocore.exceptions import NoCredentialsError, ProfileNotFound
 
 
 class SkipTag(Enum):
@@ -23,37 +24,63 @@ class Utilities:
     """
 
     @staticmethod
-    def create_session(region, resource, env_file_path=".env"):
+    def create_session(region, resource, env_file_path=".env", profile=None):
         load_dotenv(dotenv_path=env_file_path)
 
-        # Get access key and secret key from environment variables
-        access_key = os.getenv("AWS_ACCESS_KEY_ID")
-        secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        try:
+            if profile:
+                session = boto3.Session(profile_name=profile, region_name=region)
+            else:
+                # Get access key and secret key from environment variables
+                access_key = os.getenv("AWS_ACCESS_KEY_ID")
+                secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-        # Create session with access key, secret key, and optional region
-        session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
-        client = session.resource(resource)
+                if not access_key or not secret_key:
+                    raise NoCredentialsError
 
-        return client
+                # Create session with access key, secret key, and optional region
+                session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
+
+            client = session.resource(resource)
+            return client
+
+        except ProfileNotFound:
+            raise ProfileNotFound(f"The specified profile '{profile}' does not exist.")
+        except NoCredentialsError:
+            raise NoCredentialsError("AWS credentials not found. Please provide them via environment variables or a profile.")
 
     @staticmethod
-    def create_client(region, resource, env_file_path=".env"):
+    def create_client(region, resource, env_file_path=".env", profile=None):
         load_dotenv(dotenv_path=env_file_path)
 
-        # Get access key and secret key from environment variables
-        access_key = os.getenv("AWS_ACCESS_KEY_ID")
-        secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        try:
+            if profile:
+                session = boto3.Session(profile_name=profile, region_name=region)
+                client = session.client(resource)
+            else:
+                # Get access key and secret key from environment variables
+                access_key = os.getenv("AWS_ACCESS_KEY_ID")
+                secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-        # Create session with access key, secret key, and optional region
-        client = boto3.client(resource, aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
+                if not access_key or not secret_key:
+                    raise NoCredentialsError
 
-        return client
+                # Create client with access key, secret key, and optional region
+                client = boto3.client(resource, aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
 
-    @staticmethod
-    def run_terraform_cmd(cmd):
+            return client
+
+        except ProfileNotFound:
+            raise ProfileNotFound(f"The specified profile '{profile}' does not exist.")
+        except NoCredentialsError:
+            raise NoCredentialsError("AWS credentials not found. Please provide them via environment variables or a profile.")
+
+    def run_terraform_cmd(cmd, profile):
         print(cmd)
         try:
-            completed_process = subprocess.run(cmd, text=True, capture_output=True)
+            env = os.environ.copy()
+            env["AWS_PROFILE"] = profile
+            completed_process = subprocess.run(cmd, text=True, capture_output=True, env=env)
             if completed_process.returncode == 0:
                 logger.info(completed_process.stdout)
             else:

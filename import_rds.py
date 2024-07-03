@@ -12,10 +12,11 @@ class RDSImportSetUp:
     RDS instance import
     """
 
-    def __init__(self, region, resource, local_repo_path, filters):
-        self.client = Utilities.create_client(region=region, resource=resource)
+    def __init__(self, region, resource, local_repo_path, filters, profile):
+        self.client = Utilities.create_client(region=region, resource=resource, profile=profile)
         self.tmpl = Environment(loader=FileSystemLoader("templates"))
         self.region = region
+        self.aws_profile = profile
         self.local_repo_path = local_repo_path
         self.tag_filters = {key: value for key, value in filters} if filters else {}
 
@@ -26,7 +27,7 @@ class RDSImportSetUp:
         :param key_id: The ID or ARN of the KMS key
         :return: 'AWS' if the key is AWS-managed, 'CUSTOMER' if user-managed, or None if the key is not found
         """
-        kms_client = Utilities.create_client(region=self.region, resource="kms")
+        kms_client = Utilities.create_client(region=self.region, resource="kms", profile=self.aws_profile)
 
         try:
             response = kms_client.describe_key(KeyId=key_id)
@@ -170,7 +171,7 @@ class RDSImportSetUp:
             with open(output_file_path, "w") as f:
                 f.write(rendered_template)
 
-            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{instance['identifier']}_instance.tf"])
+            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{instance['identifier']}_instance.tf"], profile=self.aws_profile)
             os.rename(output_file_path, f"{output_file_path}.imported")
             cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{instance['identifier']}_instance.tf")
 
@@ -183,9 +184,9 @@ class RDSImportSetUp:
 
     def set_everything(self):
         Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"], profile=self.aws_profile)
         clusters = self.get_rds_clusters()
         instances = self.get_rds_instances()
         self.generate_import_blocks(db_instances=instances, db_clusters=clusters)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"])
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"], profile=self.aws_profile)
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"], profile=self.aws_profile)

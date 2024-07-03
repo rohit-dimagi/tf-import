@@ -15,10 +15,11 @@ class EC2ImportSetUp:
     Note: Target Group Attachement resource import is not supported by Provider
     """
 
-    def __init__(self, region, resource, local_repo_path, hosted_zone_name, filters):
-        self.client = Utilities.create_session(region=region, resource=resource)
+    def __init__(self, region, resource, local_repo_path, hosted_zone_name, filters, profile):
+        self.client = Utilities.create_session(region=region, resource=resource, profile=profile)
         self.tmpl = Environment(loader=FileSystemLoader("templates"))
         self.region = region
+        self.aws_profile = profile
         self.local_repo_path = local_repo_path
         self.hosted_zone_name = hosted_zone_name
         self.tag_filters = {key: value for key, value in filters} if filters else {}
@@ -27,7 +28,7 @@ class EC2ImportSetUp:
         """
         Get Hosted Zone ID from Zone Name.
         """
-        client = Utilities.create_client(region=self.region, resource="route53")
+        client = Utilities.create_client(region=self.region, resource="route53", profile=self.aws_profile)
         # List hosted zones associated with the given VPC
         response = client.list_hosted_zones_by_vpc(VPCId=vpc_id, VPCRegion=self.region)
 
@@ -83,7 +84,7 @@ class EC2ImportSetUp:
         """
         Get Instance DNS Record
         """
-        client = Utilities.create_client(region=self.region, resource="route53")
+        client = Utilities.create_client(region=self.region, resource="route53", profile=self.aws_profile)
         # Retrieve the list of record sets for the specified hosted zone
         paginator = client.get_paginator("list_resource_record_sets")
         record_sets = paginator.paginate(HostedZoneId=hosted_zone_id)
@@ -134,7 +135,7 @@ class EC2ImportSetUp:
             with open(output_file_path, "w") as f:
                 f.write(rendered_template)
 
-            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{instance['instance_name']}.tf"])
+            Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan", f"-generate-config-out=generated-plan-import-{instance['instance_name']}.tf"], profile=self.aws_profile)
             os.rename(output_file_path, f"{output_file_path}.imported")
             cleanup_tf_plan_file(input_tf_file=f"{self.local_repo_path}/generated-plan-import-{instance['instance_name']}.tf")
 
@@ -150,9 +151,9 @@ class EC2ImportSetUp:
         Setup the WorkFlow Steps.
         """
         Utilities.generate_tf_provider(self.local_repo_path, region=self.region)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "init"], profile=self.aws_profile)
 
         instances = self.describe_instance()
         self.generate_import_blocks(instances)
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"])
-        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"])
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "fmt"], profile=self.aws_profile)
+        Utilities.run_terraform_cmd(["terraform", f"-chdir={self.local_repo_path}", "plan"], profile=self.aws_profile)

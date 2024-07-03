@@ -125,7 +125,7 @@ graph TD;
 
 ### Follow these steps:-
 
-1. Get AWS Access keys and put it into `default` profile under ` ~/.aws/credentials`
+1. Get AWS Access keys and put it into a profile under ` ~/.aws/credentials`
 
 2. Create Folder where you want to store the generated files.
     * This can be an existing repo
@@ -143,6 +143,7 @@ graph TD;
 
 
 ## Examples
+* If you have different profiles under ` ~/.aws/credentials` then use `--profile <profile name>` when running the script to use the correct one. by default it's using `default` profile. 
 * Import EC2 instances from region eu-west-1 with a hosted-zone name  and a tag to limit the import radius. Multiple tags supported.
 ```
 python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> -t <TAG NAME> <TAG VALUE>
