@@ -9,9 +9,8 @@ import sys
 
 class EKSImportSetUp:
     """
-    Import Block for EC2 Import.
-    Supoprted resources: EC2, EBS, Route53
-    Note: Target Group Attachement resource import is not supported by Provider
+    Import Block for EKS Import.
+    Supoprted resources: EKS, AddOns, ASG, Launch Templates
     """
 
     def __init__(self, region, resource, local_repo_path, filters, profile):

@@ -9,7 +9,8 @@ from botocore.exceptions import ClientError
 
 class RDSImportSetUp:
     """
-    RDS instance import
+    Import Block for RDS Import.
+    Supoprted resources: RDS Cluster, RDS Instance, Security Groups, KMS, Parameter Group, Option Group
     """
 
     def __init__(self, region, resource, local_repo_path, filters, profile):
