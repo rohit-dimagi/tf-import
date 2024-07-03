@@ -38,6 +38,11 @@ It's using Boto3 & Jinja Templates to achieve it's state.
 
 ### Local Setup
 
+#### Prerequisite
+
+* Terraform
+* Python3
+
 Steps to Follow :-
 
 1. We will use a separate Virtual environment for python to run this project. Before Proceeding make sure you have python3  and latest terraform installed
