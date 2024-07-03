@@ -56,11 +56,17 @@ class EC2ImportSetUp:
 
         for instance in instances:
             instance_tags = {tag["Key"]: tag["Value"] for tag in instance.tags}
+            
             # Skip instances with the TF_IMPORTED tag set to true
             if instance_tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
                 logger.info(f"Skipping Instance {instance.id} where TF_IMPORTED tag is set")
                 continue
-
+            
+            # Skip instances with the aws:ec2launchtemplate:id tag set
+            if "aws:ec2launchtemplate:id" in instance_tags:
+                logger.info(f"Skipping Instance {instance.id} where aws:ec2launchtemplate:id tag is set")
+                continue
+            
             instance_info = {"instance_id": instance.id, "private_ip": instance.private_ip_address, "vpc_id": instance.vpc_id, "instance_name": None, "Volumes": []}
 
             for tag in instance.tags:
