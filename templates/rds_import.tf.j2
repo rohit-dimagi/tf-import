@@ -20,13 +20,6 @@ import {
 {% endif -%}
 
 
-{% for sg in security_groups %}
-import {
-  to = aws_security_group.{{ rds_cluster_identifier }}_cluster_{{ loop.index }}
-  id = "{{ sg }}"
-}
-{% endfor -%}
-
 {% for db_instance in cluster_instances %}
 {% if is_aurora == true %}
 import {
@@ -44,7 +37,18 @@ import {
 {%- if 'default.' not in db_parameter_group %}
 
 import {
-  to = aws_db_parameter_group.{{ db_instance.instance_identifier }}
+  to = aws_db_parameter_group.{{ db_instance.instance_identifier }}_{{ db_parameter_group }}
+  id = "{{ db_parameter_group }}"
+}
+
+{% endif %}
+{% endfor %}
+
+{% for option_group in db_instance.option_groups %}
+{%- if 'default:' not in option_group %}
+
+import {
+  to = aws_db_option_group.{{ db_instance.instance_identifier }}_{{ db_parameter_group }}
   id = "{{ db_parameter_group }}"
 }
 
@@ -71,18 +75,20 @@ import {
 {% endif -%}
 
 
-{% for sg in security_groups %}
+{% for option_group in option_groups %}
+{%- if 'default:' not in option_group %}
 import {
-  to = aws_security_group.{{ instance_identifier }}_instance_{{ loop.index }}
-  id = "{{ sg }}"
+  to = aws_db_option_group.{{ instance_identifier }}_instance_{{ loop.index }}_{{ option_group }}
+  id = "{{ option_group }}"
 }
+{% endif %}
 {% endfor -%}
 
 {% for db_param_group in db_parameter_groups %}
 {%- if 'default.' not in db_param_group %}
 
 import {
-  to = aws_db_parameter_group.{{ instance_identifier }}_{{ loop.index }}
+  to = aws_db_parameter_group.{{ instance_identifier }}_{{ loop.index }}_{{ db_param_group }}
   id = "{{ db_param_group }}"
 }
 {% endif %}

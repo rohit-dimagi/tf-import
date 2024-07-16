@@ -54,7 +54,7 @@ class RDSImportSetUp:
 
                 # Skip instance if TF_IMPORTED tag is set to true
                 if tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
-                    logger.info(f"Skipping RDS Instance {db_instance["DBInstanceIdentifier"]} where TF_IMPORTED tag is set")
+                    logger.info(f'Skipping RDS Instance {db_instance["DBInstanceIdentifier"]} where TF_IMPORTED tag is set')
                     continue
 
                 # Check if the instance matches all tag filters:
@@ -62,6 +62,7 @@ class RDSImportSetUp:
                     if all(tags.get(key) == value for key, value in self.tag_filters.items()):
                         kms_key_id = self.get_key_manager(db_instance["KmsKeyId"].split("/")[-1])
                         security_groups = [sg["VpcSecurityGroupId"] for sg in db_instance["VpcSecurityGroups"]]
+                        option_group_names = [og["OptionGroupName"] for og in db_instance.get("OptionGroupMemberships", [])]
 
                         instance_info = {
                             "kms_key_id": kms_key_id if kms_key_id is not None else "",
@@ -69,6 +70,7 @@ class RDSImportSetUp:
                             "is_aurora": "true" if db_instance["Engine"].startswith("aurora") else "false",
                             "db_parameter_groups": [pg["DBParameterGroupName"] for pg in db_instance["DBParameterGroups"]],
                             "security_groups": security_groups,
+                            "option_groups": option_group_names,
                         }
                         instances.append(instance_info)
 
@@ -91,7 +93,7 @@ class RDSImportSetUp:
 
                 # Skip instance if TF_IMPORTED tag is set to true
                 if tags.get("TF_IMPORTED") == SkipTag.TF_IMPORTED.value:
-                    logger.info(f"Skipping RDS Instance {db_cluster["DBInstanceIdentifier"]} where TF_IMPORTED tag is set")
+                    logger.info(f'Skipping RDS Cluster {db_cluster["DBClusterIdentifier"]} where TF_IMPORTED tag is set')
                     continue
 
                 # Check if the instance matches all tag filters
@@ -103,8 +105,13 @@ class RDSImportSetUp:
                     for instance_identifier in db_cluster["DBClusterMembers"]:
                         instance_info = self.client.describe_db_instances(DBInstanceIdentifier=instance_identifier["DBInstanceIdentifier"])
                         for instance in instance_info["DBInstances"]:
-                            instance_data = {"instance_identifier": instance["DBInstanceIdentifier"], "db_parameter_group": [param_group["DBParameterGroupName"] for param_group in instance["DBParameterGroups"]]}
+                            instance_data = {
+                                "instance_identifier": instance["DBInstanceIdentifier"],
+                                "db_parameter_group": [param_group["DBParameterGroupName"] for param_group in instance["DBParameterGroups"]],
+                                "option_groups": [og["OptionGroupName"] for og in instance.get("OptionGroupMemberships", [])],
+                            }
                             cluster_instances.append(instance_data)
+                    
                     kms_key_id = self.get_key_manager(db_cluster["KmsKeyId"].split("/")[-1])
 
                     cluster_info = {
@@ -115,7 +122,7 @@ class RDSImportSetUp:
                         "security_groups": security_groups,
                         "cluster_instances": cluster_instances,
                     }
-                clusters.append(cluster_info)
+                    clusters.append(cluster_info)
         logger.info(f"Total RDS Clusters Found: { len(clusters) }")
         return clusters
 
@@ -134,7 +141,6 @@ class RDSImportSetUp:
                 "cluster_parameter": cluster["cluster_parameter"],
                 "cluster_instances": cluster["cluster_instances"],
                 "kms_key_id": cluster["kms_key_id"],
-                "security_groups": cluster["security_groups"],
                 "is_cluster": "true",
                 "is_aurora": cluster["is_aurora"],
             }
@@ -163,9 +169,9 @@ class RDSImportSetUp:
                 "instance_identifier": instance["identifier"],
                 "db_parameter_groups": instance["db_parameter_groups"],
                 "kms_key_id": instance["kms_key_id"],
-                "security_groups": instance["security_groups"],
                 "is_aurora": "false",
                 "is_cluster": "false",
+                "option_groups": instance["option_groups"]
             }
             rendered_template = template.render(context)
 

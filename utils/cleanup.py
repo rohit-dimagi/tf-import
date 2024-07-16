@@ -138,7 +138,9 @@ def process_terraform_plan(input_file):
                     new_lines.remove(get_iops_line)
                     is_iops_set = False
                     is_gp2_set = False
-
+            if current_resource_type == "aws_db_option_group": #Special Case for Jsonencode Skipping decimal in version number fix
+                if "jsonencode(8)" in line:
+                    line = 'major_engine_version      = "8.0"\n'
             if should_remove_line(line, current_resource_type):
                 continue
         new_lines.append(line)
