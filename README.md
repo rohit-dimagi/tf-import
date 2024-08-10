@@ -35,6 +35,15 @@ It's using Boto3 & Jinja Templates to achieve it's state.
     * Target Groups for the ALB
     * LB Listeners
 
+* S3
+    * Bucket
+    * Bucket ACL
+    * Bucket Policy
+    * Bucket Server Side Encryption
+    * Bucket Replication Configuration
+    * Bucket Lifecycle Configuration
+    * Bucket Versioning
+    * Bucket Public Access
 
 ### Local Setup
 
@@ -70,7 +79,7 @@ $ python main.py
 usage: main.py [-h] --resource RESOURCE --local-repo-path LOCAL_REPO_PATH --region REGION [--hosted-zone-name HOSTED_ZONE_NAME] [-t key value]
 main.py: error: the following arguments are required: --resource, --local-repo-path, --region
 ```
-if everything is setup properly you will see output similar to above 
+if everything is setup properly you will see output similar to above
 
 
 
@@ -148,7 +157,7 @@ graph TD;
 
 
 ## Examples
-* If you have different profiles under ` ~/.aws/credentials` then use `--profile <profile name>` when running the script to use the correct one. by default it's using `default` profile. 
+* If you have different profiles under ` ~/.aws/credentials` then use `--profile <profile name>` when running the script to use the correct one. by default it's using `default` profile.
 * Import EC2 instances from region eu-west-1 with a hosted-zone name  and a tag to limit the import radius. Multiple tags supported.
 ```
 python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> -t <TAG NAME> <TAG VALUE>
@@ -156,27 +165,32 @@ python main.py --resource ec2 --local-repo-path <dir to put the generated files>
 
 * Import ALL EC2 instances from region eu-west-1
 ```
-python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records> 
+python main.py --resource ec2 --local-repo-path <dir to put the generated files> --region <aws region name> --hosted-zone-name <route53 zone name for DNS records>
 ```
 
 * Import All RDS Cluster and instances from a particular region
 ```
-python main.py --resource rds --local-repo-path <dir to put the generated files> --region < aws region name> 
+python main.py --resource rds --local-repo-path <dir to put the generated files> --region < aws region name>
 
 ```
 
 * Import All EKS Cluster from a particular region
 ```
-python main.py --resource eks --local-repo-path <dir to put the generated files> --region < aws region name> 
+python main.py --resource eks --local-repo-path <dir to put the generated files> --region < aws region name>
 
 ```
 
 * Import All ALB  from a particular region
 ```
-python main.py --resource alb --local-repo-path <dir to put the generated files> --region < aws region name> 
+python main.py --resource alb --local-repo-path <dir to put the generated files> --region < aws region name>
 
 ```
 
+* Import All S3 Bucket  from a particular region
+```
+python main.py --resource s3 --local-repo-path <dir to put the generated files> --region < aws region name>
+
+```
 
 
 

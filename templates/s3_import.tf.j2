@@ -1,0 +1,65 @@
+import {
+  to = aws_s3_bucket.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+
+import {
+  to = aws_s3_bucket_public_access_block.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+
+{% if bucket_acl %}
+import {
+  to = aws_s3_bucket_acl.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_policy %}
+import {
+  to = aws_s3_bucket_policy.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_lifecycle_rule %}
+import {
+  to = aws_s3_bucket_lifecycle_configuration.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_intelligent_tiering %}
+import {
+  to = aws_s3_bucket_intelligent_tiering_configuration.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_cors_config %}
+import {
+  to = aws_s3_bucket_cors_configuration.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_versioning %}
+import {
+  to = aws_s3_bucket_versioning.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_replication_config %}
+import {
+  to = aws_s3_bucket_replication_configuration.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
+
+{% if bucket_server_side_encryption %}
+import {
+  to = aws_s3_bucket_server_side_encryption_configuration.{{ bucket_name }}
+  id = "{{ bucket_name }}"
+}
+{% endif %}
