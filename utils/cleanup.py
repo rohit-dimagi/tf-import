@@ -40,6 +40,7 @@ RESOURCE_CLEANUP = {
     "aws_lb": ["subnets "],
     "aws_lb_target_group": ["= 0"],
     "aws_autoscaling_group": ["= 0", "= \[\]", "availability_zones", "name_prefix"],
+    "aws_emr_cluster": ["subnet_id "]
 }
 
 
@@ -57,7 +58,12 @@ def remove_global_lines(tf_file, list_to_cleanup):
                 # Special rule for aws_iam_role properties assume_role_policy of jsonencode block.
                 if "= {}" in line and "Condition" in line:
                     filtered_lines.append(line)
+
+                # Handle null sensitive value for kerboreos auth in EMR cluster
+                if any(keyword in line for keyword in ["ad_domain_join_password", "ad_domain_join_user", "cross_realm_trust_principal_password", "kdc_admin_password"]):
+                    filtered_lines.append(line)
                 continue
+
             filtered_lines.append(line)
 
     with open(output_file, "w") as write_file:

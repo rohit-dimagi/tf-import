@@ -45,6 +45,10 @@ It's using Boto3 & Jinja Templates to achieve it's state.
     * Bucket Versioning
     * Bucket Public Access
 
+* EMR
+    * EMR Cluster
+
+
 ### Local Setup
 
 #### Prerequisite
@@ -192,9 +196,23 @@ python main.py --resource s3 --local-repo-path <dir to put the generated files> 
 
 ```
 
+* Import EMR Cluster from a particular region
+```
+python main.py --resource emr --local-repo-path <dir to put the generated files> --region < aws region name>
 
-
+```
 
 ## Current Issue
 * AWS ALB Target Group Attachment doesn't support Import
 * AWS ALB Listeners import has an open issue in github https://github.com/hashicorp/terraform-provider-aws/issues/37211
+* AWS EMR Cluster configured with kerboros auth(sensitive nature of auth) will fail in terraform plan phase. You will need to fill out these sensitive value with appropriate correct values. EMR import should be done one by one and not in bulk due to this issue. config reference is below from generated plan file.
+
+```
+  kerberos_attributes {
+    ad_domain_join_password              = null # sensitive
+    ad_domain_join_user                  = null
+    cross_realm_trust_principal_password = null # sensitive
+    kdc_admin_password                   = null # sensitive
+    realm                                = "EU-WEST-1.COMPUTE.INTERNAL"
+  }
+```

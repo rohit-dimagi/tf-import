@@ -5,6 +5,8 @@ from import_rds import RDSImportSetUp
 from import_eks import EKSImportSetUp
 from import_alb import ALBImportSetUp
 from import_s3  import S3ImportSetUp
+from import_emr import EMRImportSetUp
+
 
 from loguru import logger
 
@@ -39,6 +41,8 @@ if __name__ == "__main__":
     elif args.resource == "s3":
         eks_import = S3ImportSetUp(region=args.region, resource=args.resource, local_repo_path=args.local_repo_path, filters=args.tag, profile=args.profile)
         eks_import.set_everything()
-
+    elif args.resource == "emr":
+        emr_import = EMRImportSetUp(region=args.region, resource=args.resource, local_repo_path=args.local_repo_path, filters=args.tag, profile=args.profile)
+        emr_import.set_everything()
     else:
         logger.info(f"Import Not currently supported for {args.resource}")
